@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompareBD — Find the Best Price in Bangladesh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #09090b; color: #f4f4f5; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.5s ease-out forwards; }
+        .delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+        .gradient-text {
+            background: linear-gradient(to bottom, #f4f4f5, #a1a1aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glow-bg {
+            position: absolute;
+            width: 600px; height: 400px;
+            background: rgba(249,115,22,0.05);
+            filter: blur(120px);
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+
+        .glass-card {
+            backdrop-filter: blur(12px);
+            background: rgba(24,24,27,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .cheapest-badge {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 0 20px rgba(34,197,94,0.3);
+        }
+
+        .savings-bar {
+            background: linear-gradient(90deg, #22c55e, #f97316);
+        }
+
+        .site-daraz { color: #f85606; }
+        .site-pickaboo { color: #e91e63; }
+        .site-startech { color: #00b0f0; }
+        .site-ryans { color: #ff6f00; }
+        .site-bikroy { color: #7c3aed; }
+        .site-priyoshop { color: #0891b2; }
+        .site-ajkerdeal { color: #dc2626; }
+        .site-gadgetgear { color: #2563eb; }
+        .site-chaldal { color: #16a34a; }
+        .site-0 { color: #f85606; }
+        .site-1 { color: #e91e63; }
+        .site-2 { color: #00b0f0; }
+        .site-3 { color: #ff6f00; }
+        .site-4 { color: #7c3aed; }
+        .site-5 { color: #0891b2; }
+        .site-6 { color: #dc2626; }
+        .site-7 { color: #2563eb; }
+
+        .search-glow:focus-within {
+            border-color: rgba(249,115,22,0.5);
+            box-shadow: 0 0 30px rgba(249,115,22,0.1);
+        }
+
+        .result-card { transition: all 0.4s ease; }
+        .result-card:hover {
+            transform: scale(1.01);
+            border-color: rgba(249,115,22,0.3);
+        }
+
+        .price-row:hover { background: rgba(249,115,22,0.05); }
+
+        .toast {
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+            height: 4px;
+            border-radius: 2px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: #f97316;
+            cursor: pointer;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .category-card:hover .cat-icon {
+            transform: scale(1.1);
+            color: #f97316;
+        }
+        .cat-icon { transition: all 0.3s ease; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-4 md:px-6" style="backdrop-filter: blur(12px); background: rgba(9,9,11,0.85); border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <a href="#" onclick="goHome()" class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                <span class="iconify text-white text-sm" data-icon="lucide:bar-chart-3"></span>
+            </div>
+            <span class="font-semibold text-zinc-100 text-lg tracking-tight">Compare<span class="text-orange-400">BD</span></span>
+        </a>
+
+        <div class="hidden md:flex items-center gap-6">
+            <button onclick="scrollToSection('trending')" class="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Trending</button>
+            <button onclick="scrollToSection('categories')" class="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">Categories</button>
+            <button onclick="scrollToSection('how-it-works')" class="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">How It Works</button>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="showToast('Bookmarks feature coming soon!')" class="p-2 rounded-lg hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-zinc-100">
+                <span class="iconify text-lg" data-icon="lucide:bookmark"></span>
+            </button>
+            <button onclick="showToast('Alerts feature coming soon!')" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 transition-colors border border-zinc-700/50">
+                <span class="iconify text-sm" data-icon="lucide:bell"></span>
+                Price Alerts
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="relative pt-32 pb-10 md:pt-40 md:pb-16 text-center px-4">
+        <div class="glow-bg" style="top: 10%; left: 50%; transform: translateX(-50%);"></div>
+
+        <div class="relative max-w-3xl mx-auto">
+            <div class="animate-in inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/50 text-xs text-zinc-400 mb-6">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Comparing prices across 8+ Bangladeshi stores
+            </div>
+
+            <h1 class="animate-in delay-1 text-4xl md:text-6xl font-medium leading-[1.1] tracking-tight gradient-text mb-5">
+                Find the Best Price<br>Across Bangladesh
+            </h1>
+
+            <p class="animate-in delay-2 text-zinc-400 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-8">
+                Stop overpaying. Search any product and instantly see where it's cheapest — Daraz, Pickaboo, Star Tech, Ryans, Bikroy, and more.
+            </p>
+
+            <!-- Search Bar -->
+            <div class="animate-in delay-3 max-w-2xl mx-auto">
+                <div class="search-glow flex items-center gap-3 px-4 py-3 md:px-5 md:py-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 transition-all duration-300" style="backdrop-filter: blur(12px);">
+                    <span class="iconify text-xl text-zinc-500" data-icon="lucide:search"></span>
+                    <input
+                        id="searchInput"
+                        type="text"
+                        placeholder="Search phones, laptops, groceries..."
+                        class="flex-1 bg-transparent outline-none text-zinc-100 placeholder-zinc-600 text-sm md:text-base"
+                        onkeydown="if(event.key==='Enter') performSearch()"
+                    >
+                    <button onclick="performSearch()" class="px-4 md:px-6 py-2 md:py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-semibold hover:scale-105 active:scale-95 transition-transform duration-150" style="box-shadow: 0 10px 15px -3px rgba(255,255,255,0.05);">
+                        Compare
+                    </button>
+                </div>
+
+                <!-- Quick searches -->
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+                    <span class="text-xs text-zinc-600">Popular:</span>
+                    <button onclick="quickSearch('iPhone 15')" class="px-2.5 py-1 rounded-lg text-xs text-zinc-400 bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700 hover:text-zinc-200 transition-colors">iPhone 15</button>
+                    <button onclick="quickSearch('Samsung Galaxy S24')" class="px-2.5 py-1 rounded-lg text-xs text-zinc-400 bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700 hover:text-zinc-200 transition-colors">Samsung Galaxy S24</button>
+                    <button onclick="quickSearch('MacBook Air M3')" class="px-2.5 py-1 rounded-lg text-xs text-zinc-400 bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700 hover:text-zinc-200 transition-colors">MacBook Air M3</button>
+                    <button onclick="quickSearch('Redmi Note 13')" class="px-2.5 py-1 rounded-lg text-xs text-zinc-400 bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700 hover:text-zinc-200 transition-colors">Redmi Note 13</button>
+                    <button onclick="quickSearch('Walton AC')" class="px-2.5 py-1 rounded-lg text-xs text-zinc-400 bg-zinc-900/50 border border-zinc-800/50 hover:border-zinc-700 hover:text-zinc-200 transition-colors">Walton AC</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="px-4 pb-12">
+        <div class="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-4 rounded-xl border border-zinc-800/50 bg-zinc-900/30">
+                <div class="text-2xl md:text-3xl font-semibold text-zinc-100">8+</div>
+                <div class="text-xs text-zinc-500 mt-1">Stores Compared</div>
+            </div>
+            <div class="text-center p-4 rounded-xl border border-zinc-800/50 bg-zinc-900/30">
+                <div class="text-2xl md:text-3xl font-semibold text-orange-400">৳2,500+</div>
+                <div class="text-xs text-zinc-500 mt-1">Avg. Savings Found</div>
+            </div>
+            <div class="text-center p-4 rounded-xl border border-zinc-800/50 bg-zinc-900/30">
+                <div class="text-2xl md:text-3xl font-semibold text-zinc-100">50K+</div>
+                <div class="text-xs text-zinc-500 mt-1">Products Tracked</div>
+            </div>
+            <div class="text-center p-4 rounded-xl border border-zinc-800/50 bg-zinc-900/30">
+                <div class="text-2xl md:text-3xl font-semibold text-emerald-400">Free</div>
+                <div class="text-xs text-zinc-500 mt-1">Always & Forever</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section (Hidden by default) -->
+    <section id="resultsSection" class="hidden px-4 pb-16">
+        <div class="max-w-6xl mx-auto">
+            <!-- Results Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 id="resultsTitle" class="text-xl md:text-2xl font-semibold tracking-tight text-zinc-100"></h2>
+                    <p id="resultsSubtitle" class="text-sm text-zinc-500 mt-1"></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="sortSelect" onchange="sortResults()" class="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 outline-none cursor-pointer">
+                        <option value="savings">Highest Savings</option>
+                        <option value="price-low">Lowest Price</option>
+                        <option value="price-high">Highest Price</option>
+                        <option value="stores">Most Stores</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filters Row -->
+            <div class="flex flex-wrap items-center gap-2 mb-6">
+                <span class="text-xs text-zinc-500 mr-1">Filter:</span>
+                <button onclick="toggleStoreFilter('all')" class="store-filter active px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="all">All Stores</button>
+                <button onclick="toggleStoreFilter('Daraz')" class="store-filter px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="Daraz">Daraz</button>
+                <button onclick="toggleStoreFilter('Pickaboo')" class="store-filter px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="Pickaboo">Pickaboo</button>
+                <button onclick="toggleStoreFilter('Star Tech')" class="store-filter px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="Star Tech">Star Tech</button>
+                <button onclick="toggleStoreFilter('Ryans')" class="store-filter px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="Ryans">Ryans</button>
+                <button onclick="toggleStoreFilter('Bikroy')" class="store-filter px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="Bikroy">Bikroy</button>
+                <button onclick="toggleStoreFilter('Gadget & Gear')" class="store-filter px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors" data-store="Gadget & Gear">Gadget & Gear</button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden space-y-4">
+                <div class="skeleton h-48 rounded-2xl"></div>
+                <div class="skeleton h-48 rounded-2xl"></div>
+                <div class="skeleton h-48 rounded-2xl"></div>
+            </div>
+
+            <!-- Results Container -->
+            <div id="resultsContainer" class="space-y-4"></div>
+        </div>
+    </section>
+
+    <!-- Trending Searches -->
+    <section id="trending" class="px-4 py-16">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                    <span class="iconify text-orange-400" data-icon="lucide:trending-up"></span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-semibold tracking-tight">Trending Comparisons</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="trendingGrid"></div>
+        </div>
+    </section>
+
+    <!-- Categories -->
+    <section id="categories" class="px-4 py-16">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                    <span class="iconify text-orange-400" data-icon="lucide:layout-grid"></span>
+                </div>
+                <h2 class="text-xl md:text-2xl font-semibold tracking-tight">Browse Categories</h2>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" id="categoriesGrid"></div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="px-4 py-16">
+        <div class="max-w-4xl mx-auto text-center mb-12">
+            <h2 class="text-2xl md:text-3xl font-semibold tracking-tight gradient-text mb-3">How CompareBD Works</h2>
+            <p class="text-zinc-500 text-sm md:text-base">Three simple steps to save money on every purchase</p>
+        </div>
+        <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-card rounded-2xl p-6 text-center relative">
+                <div class="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">1</div>
+                <div class="w-12 h-12 mx-auto rounded-xl bg-orange-500/10 flex items-center justify-center mb-4">
+                    <span class="iconify text-2xl text-orange-400" data-icon="lucide:search"></span>
+                </div>
+                <h3 class="font-semibold text-zinc-100 mb-2">Search Any Product</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed">Type what you're looking for — phones, laptops, appliances, groceries, anything.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center relative">
+                <div class="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">2</div>
+                <div class="w-12 h-12 mx-auto rounded-xl bg-orange-500/10 flex items-center justify-center mb-4">
+                    <span class="iconify text-2xl text-orange-400" data-icon="lucide:bar-chart-3"></span>
+                </div>
+                <h3 class="font-semibold text-zinc-100 mb-2">Compare Prices</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed">See prices from 8+ Bangladeshi e-commerce sites side by side with savings calculated.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center relative">
+                <div class="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center justify-center">3</div>
+                <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
+                    <span class="iconify text-2xl text-emerald-400" data-icon="lucide:external-link"></span>
+                </div>
+                <h3 class="font-semibold text-zinc-100 mb-2">Buy from Cheapest</h3>
+                <p class="text-sm text-zinc-500 leading-relaxed">Click through to the cheapest store and save your hard-earned taka. Simple as that.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Supported Stores -->
+    <section class="px-4 py-16">
+        <div class="max-w-4xl mx-auto text-center mb-8">
+            <h2 class="text-xl md:text-2xl font-semibold tracking-tight mb-2">Stores We Compare</h2>
+            <p class="text-zinc-500 text-sm">Prices aggregated from Bangladesh's most trusted online stores</p>
+        </div>
+        <div class="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-daraz" data-icon="lucide:shopping-bag"></span>
+                <span class="text-sm font-medium text-zinc-300">Daraz</span>
+                <span class="text-[10px] text-zinc-600">daraz.com.bd</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-pickaboo" data-icon="lucide:shopping-cart"></span>
+                <span class="text-sm font-medium text-zinc-300">Pickaboo</span>
+                <span class="text-[10px] text-zinc-600">pickaboo.com</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-startech" data-icon="lucide:monitor"></span>
+                <span class="text-sm font-medium text-zinc-300">Star Tech</span>
+                <span class="text-[10px] text-zinc-600">startech.com.bd</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-ryans" data-icon="lucide:laptop"></span>
+                <span class="text-sm font-medium text-zinc-300">Ryans</span>
+                <span class="text-[10px] text-zinc-600">ryans.com.bd</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-bikroy" data-icon="lucide:repeat"></span>
+                <span class="text-sm font-medium text-zinc-300">Bikroy</span>
+                <span class="text-[10px] text-zinc-600">bikroy.com</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-gadgetgear" data-icon="lucide:smartphone"></span>
+                <span class="text-sm font-medium text-zinc-300">Gadget & Gear</span>
+                <span class="text-[10px] text-zinc-600">gadgetngear.com</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-priyoshop" data-icon="lucide:package"></span>
+                <span class="text-sm font-medium text-zinc-300">PriyoShop</span>
+                <span class="text-[10px] text-zinc-600">priyoshop.com</span>
+            </div>
+            <div class="glass-card rounded-xl p-4 flex flex-col items-center gap-2 hover:border-orange-500/30 transition-colors cursor-default">
+                <span class="iconify text-2xl site-ajkerdeal" data-icon="lucide:tag"></span>
+                <span class="text-sm font-medium text-zinc-300">AjkerDeal</span>
+                <span class="text-[10px] text-zinc-600">ajkerdeal.com</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="px-4 py-16">
+        <div class="max-w-2xl mx-auto text-center glass-card rounded-3xl p-8 md:p-12 relative overflow-hidden">
+            <div class="glow-bg" style="top: -50%; left: 50%; transform: translateX(-50%); opacity: 0.5;"></div>
+            <div class="relative">
+                <h2 class="text-2xl md:text-3xl font-semibold tracking-tight gradient-text mb-3">Stop Overpaying Today</h2>
+                <p class="text-zinc-400 text-sm md:text-base mb-6">Every taka saved is a taka earned. Start comparing before you buy.</p>
+                <button onclick="document.getElementById('searchInput').focus(); window.scrollTo({top:0,behavior:'smooth'})" class="px-8 py-3 rounded-xl bg-zinc-100 text-zinc-900 font-semibold text-sm hover:scale-105 active:scale-95 transition-transform duration-150 inline-flex items-center gap-2" style="box-shadow: 0 10px 15px -3px rgba(255,255,255,0.05);">
+                    <span class="iconify" data-icon="lucide:search"></span>
+                    Start Comparing
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-800/50 px-4 py-10">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                    <span class="iconify text-white text-xs" data-icon="lucide:bar-chart-3"></span>
+                </div>
+                <span class="text-sm font-medium text-zinc-400">CompareBD</span>
+            </div>
+            <p class="text-xs text-zinc-600 text-center">CompareBD doesn't sell products. We help you find the best prices across Bangladeshi e-commerce sites. Prices may vary.</p>
+            <div class="flex items-center gap-4">
+                <a href="#" class="text-zinc-600 hover:text-zinc-400 transition-colors"><span class="iconify text-lg" data-icon="lucide:facebook"></span></a>
+                <a href="#" class="text-zinc-600 hover:text-zinc-400 transition-colors"><span class="iconify text-lg" data-icon="lucide:twitter"></span></a>
+                <a href="#" class="text-zinc-600 hover:text-zinc-400 transition-colors"><span class="iconify text-lg" data-icon="lucide:instagram"></span></a>
+            </div>
+        </div>
+    </footer>
+
+<script>
+// =================== DATA ===================
+const stores = [
+    { name: 'Daraz', url: 'https://www.daraz.com.bd', icon: 'lucide:shopping-bag', colorClass: 'site-daraz' },
+    { name: 'Pickaboo', url: 'https://www.pickaboo.com', icon: 'lucide:shopping-cart', colorClass: 'site-pickaboo' },
+    { name: 'Star Tech', url: 'https://www.startech.com.bd', icon: 'lucide:monitor', colorClass: 'site-startech' },
+    { name: 'Ryans', url: 'https://www.ryans.com.bd', icon: 'lucide:laptop', colorClass: 'site-ryans' },
+    { name: 'Bikroy', url: 'https://www.bikroy.com', icon: 'lucide:repeat', colorClass: 'site-bikroy' },
+    { name: 'Gadget & Gear', url: 'https://www.gadgetngear.com', icon: 'lucide:smartphone', colorClass: 'site-gadgetgear' },
+    { name: 'PriyoShop', url: 'https://www.priyoshop.com', icon: 'lucide:package', colorClass: 'site-priyoshop' },
+    { name: 'AjkerDeal', url: 'https://www.ajkerdeal.com', icon: 'lucide:tag', colorClass: 'site-ajkerdeal' },
+];
+
+const siteColorMap = {
+    'Daraz': '#f85606',
+    'Pickaboo': '#e91e63',
+    'Star Tech': '#00b0f0',
+    'Ryans': '#ff6f00',
+    'Bikroy': '#7c3aed',
+    'Gadget & Gear': '#2563eb',
+    'PriyoShop': '#0891b2',
+    'AjkerDeal': '#dc2626',
+};
+
+const products = [
+    {
+        name: 'iPhone 15 128GB',
+        image: 'https://picsum.photos/seed/iphone15/400/400.jpg',
+        category: 'Phones',
+        prices: [
+            { store: 'Daraz', price: 109999 },
+            { store: 'Pickaboo', price: 107999 },
+            { store: 'Star Tech', price: 106500 },
+            { store: 'Ryans', price: 107000 },
+            { store: 'Gadget & Gear', price: 105999 },
+            { store: 'Bikroy', price: 98000 },
+        ]
+    },
+    {
+        name: 'Samsung Galaxy S24 Ultra 256GB',
+        image: 'https://picsum.photos/seed/s24ultra/400/400.jpg',
+        category: 'Phones',
+        prices: [
+            { store: 'Daraz', price: 159999 },
+            { store: 'Pickaboo', price: 157999 },
+            { store: 'Star Tech', price: 155500 },
+            { store: 'Ryans', price: 156000 },
+            { store: 'Gadget & Gear', price: 154999 },
+            { store: 'AjkerDeal', price: 158500 },
+        ]
+    },
+    {
+        name: 'MacBook Air M3 13" 8/256GB',
+        image: 'https://picsum.photos/seed/macbookm3/400/400.jpg',
+        category: 'Laptops',
+        prices: [
+            { store: 'Daraz', price: 142000 },
+            { store: 'Pickaboo', price: 141500 },
+            { store: 'Star Tech', price: 139900 },
+            { store: 'Ryans', price: 140500 },
+            { store: 'Gadget & Gear', price: 138999 },
+            { store: 'Bikroy', price: 130000 },
+        ]
+    },
+    {
+        name: 'Xiaomi Redmi Note 13 Pro 5G',
+        image: 'https://picsum.photos/seed/redminote13/400/400.jpg',
+        category: 'Phones',
+        prices: [
+            { store: 'Daraz', price: 32999 },
+            { store: 'Pickaboo', price: 31999 },
+            { store: 'Star Tech', price: 31500 },
+            { store: 'Ryans', price: 31800 },
+            { store: 'Gadget & Gear', price: 31450 },
+            { store: 'AjkerDeal', price: 32500 },
+            { store: 'Bikroy', price: 29000 },
+        ]
+    },
+    {
+        name: 'Walton 1.5 Ton Inverter AC',
+        image: 'https://picsum.photos/seed/waltonac/400/400.jpg',
+        category: 'Appliances',
+        prices: [
+            { store: 'Daraz', price: 68500 },
+            { store: 'AjkerDeal', price: 67900 },
+            { store: 'PriyoShop', price: 67000 },
+            { store: 'Star Tech', price: 66900 },
+            { store: 'Ryans', price: 67500 },
+        ]
+    },
+    {
+        name: 'Samsung 55" Crystal 4K Smart TV',
+        image: 'https://picsum.photos/seed/samsungtv/400/400.jpg',
+        category: 'TVs',
+        prices: [
+            { store: 'Daraz', price: 72500 },
+            { store: 'Pickaboo', price: 71900 },
+            { store: 'Star Tech', price: 70500 },
+            { store: 'Ryans', price: 71000 },
+            { store: 'AjkerDeal', price: 73000 },
+        ]
+    },
+    {
+        name: 'HP Pavilion 15 i5 12th Gen 8GB',
+        image: 'https://picsum.photos/seed/hppavilion/400/400.jpg',
+        category: 'Laptops',
+        prices: [
+            { store: 'Daraz', price: 64500 },
+            { store: 'Star Tech', price: 62900 },
+            { store: 'Ryans', price: 63500 },
+            { store: 'Gadget & Gear', price: 62200 },
+            { store: 'Pickaboo', price: 63900 },
+            { store: 'Bikroy', price: 55000 },
+        ]
+    },
+    {
+        name: 'Sony WH-1000XM5 Headphones',
+        image: 'https://picsum.photos/seed/sonyxm5/400/400.jpg',
+        category: 'Audio',
+        prices: [
+            { store: 'Daraz', price: 42500 },
+            { store: 'Pickaboo', price: 41900 },
+            { store: 'Star Tech', price: 40500 },
+            { store: 'Ryans', price: 41000 },
+            { store: 'Gadget & Gear', price: 39999 },
+        ]
+    },
+    {
+        name: 'Realme C67 5G 6/128GB',
+        image: 'https://picsum.photos/seed/realmec67/400/400.jpg',
+        category: 'Phones',
+        prices: [
+            { store: 'Daraz', price: 17999 },
+            { store: 'Pickaboo', price: 17499 },
+            { store: 'Star Tech', price: 16900 },
+            { store: 'Ryans', price: 17100 },
+            { store: 'Gadget & Gear', price: 16850 },
+            { store: 'AjkerDeal', price: 17900 },
+            { store: 'Bikroy', price: 15000 },
+        ]
+    },
+    {
+        name: 'LG 8kg Washing Machine',
+        image: 'https://picsum.photos/seed/lgwash/400/400.jpg',
+        category: 'Appliances',
+        prices: [
+            { store: 'Daraz', price: 52000 },
+            { store: 'AjkerDeal', price: 51500 },
+            { store: 'PriyoShop', price: 50500 },
+            { store: 'Star Tech', price: 49800 },
+            { store: 'Ryans', price: 50200 },
+        ]
+    },
+    {
+        name: 'iPad Air M2 11" WiFi 128GB',
+        image: 'https://picsum.photos/seed/ipadairm2/400/400.jpg',
+        category: 'Tablets',
+        prices: [
+            { store: 'Daraz', price: 82500 },
+            { store: 'Pickaboo', price: 81500 },
+            { store: 'Star Tech', price: 79900 },
+            { store: 'Ryans', price: 80500 },
+            { store: 'Gadget & Gear', price: 79500 },
+            { store: 'Bikroy', price: 75000 },
+        ]
+    },
+    {
+        name: 'Samsung Galaxy Buds FE',
+        image: 'https://picsum.photos/seed/galaxybudsfe/400/400.jpg',
+        category: 'Audio',
+        prices: [
+            { store: 'Daraz', price: 7999 },
+            { store: 'Pickaboo', price: 7499 },
+            { store: 'Star Tech', price: 7299 },
+            { store: 'Ryans', price: 7350 },
+            { store: 'Gadget & Gear', price: 7199 },
+            { store: 'AjkerDeal', price: 7800 },
+        ]
+    },
+    {
+        name: 'OnePlus Nord CE4 Lite 5G',
+        image: 'https://picsum.photos/seed/oneplusnord/400/400.jpg',
+        category: 'Phones',
+        prices: [
+            { store: 'Daraz', price: 26999 },
+            { store: 'Pickaboo', price: 25999 },
+            { store: 'Star Tech', price: 25500 },
+            { store: 'Ryans', price: 25800 },
+            { store: 'Gadget & Gear', price: 25200 },
+            { store: 'Bikroy', price: 22000 },
+        ]
+    },
+    {
+        name: 'Philips Air Fryer HD9200',
+        image: 'https://picsum.photos/seed/philipsfryer/400/400.jpg',
+        category: 'Appliances',
+        prices: [
+            { store: 'Daraz', price: 12500 },
+            { store: 'AjkerDeal', price: 11900 },
+            { store: 'PriyoShop', price: 11500 },
+            { store: 'Pickaboo', price: 12200 },
+        ]
+    },
+    {
+        name: 'ASUS TUF Gaming F15 i5 11th Gen',
+        image: 'https://picsum.photos/seed/asustuf/400/400.jpg',
+        category: 'Laptops',
+        prices: [
+            { store: 'Daraz', price: 82000 },
+            { store: 'Star Tech', price: 79500 },
+            { store: 'Ryans', price: 80000 },
+            { store: 'Gadget & Gear', price: 78900 },
+            { store: 'Pickaboo', price: 81000 },
+            { store: 'Bikroy', price: 70000 },
+        ]
+    },
+    {
+        name: 'Canon EOS M50 Mark II Camera',
+        image: 'https://picsum.photos/seed/canonm50/400/400.jpg',
+        category: 'Cameras',
+        prices: [
+            { store: 'Daraz', price: 78000 },
+            { store: 'Star Tech', price: 76500 },
+            { store: 'Ryans', price: 77000 },
+            { store: 'Gadget & Gear', price: 75500 },
+            { store: 'Pickaboo', price: 77500 },
+        ]
+    },
+    {
+        name: 'Mi Band 8 Pro',
+        image: 'https://picsum.photos/seed/miband8/400/400.jpg',
+        category: 'Wearables',
+        prices: [
+            { store: 'Daraz', price: 5499 },
+            { store: 'Pickaboo', price: 5199 },
+            { store: 'Star Tech', price: 4999 },
+            { store: 'Ryans', price: 5050 },
+            { store: 'Gadget & Gear', price: 4899 },
+            { store: 'AjkerDeal', price: 5300 },
+        ]
+    },
+    {
+        name: 'Haier 18 Cu Ft Refrigerator',
+        image: 'https://picsum.photos/seed/haierfridge/400/400.jpg',
+        category: 'Appliances',
+        prices: [
+            { store: 'Daraz', price: 58000 },
+            { store: 'AjkerDeal', price: 56500 },
+            { store: 'PriyoShop', price: 55500 },
+            { store: 'Star Tech', price: 55000 },
+            { store: 'Ryans', price: 55800 },
+        ]
+    },
+];
+
+const categories = [
+    { name: 'Phones', icon: 'lucide:smartphone', count: 6 },
+    { name: 'Laptops', icon: 'lucide:laptop', count: 3 },
+    { name: 'Appliances', icon: 'lucide:refrigerator', count: 4 },
+    { name: 'TVs', icon: 'lucide:tv', count: 1 },
+    { name: 'Audio', icon: 'lucide:headphones', count: 2 },
+    { name: 'Tablets', icon: 'lucide:tablet', count: 1 },
+    { name: 'Cameras', icon: 'lucide:camera', count: 1 },
+    { name: 'Wearables', icon: 'lucide:watch', count: 1 },
+    { name: 'Groceries', icon: 'lucide:shopping-basket', count: 0 },
+    { name: 'Fashion', icon: 'lucide:shirt', count: 0 },
+];
+
+// =================== STATE ===================
+let currentResults = [];
+let activeStoreFilter = 'all';
+
+// =================== FUNCTIONS ===================
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    const colors = {
+        info: 'border-zinc-700 bg-zinc-900',
+        success: 'border-emerald-700 bg-emerald-950',
+        warning: 'border-orange-700 bg-orange-950',
+    };
+    toast.className = `toast px-4 py-3 rounded-xl border ${colors[type]} text-sm text-zinc-200 shadow-2xl`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function formatPrice(price) {
+    return '৳' + price.toLocaleString('en-BD');
+}
+
+function getStoreColor(storeName) {
+    return siteColorMap[storeName] || '#a1a1aa';
+}
+
+function getStoreInfo(storeName) {
+    return stores.find(s => s.name === storeName) || stores[0];
+}
+
+function performSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) {
+        showToast('Please enter a product name to search', 'warning');
+        return;
+    }
+    searchProducts(query);
+}
+
+function quickSearch(query) {
+    document.getElementById('searchInput').value = query;
+    searchProducts(query);
+}
+
+function searchProducts(query) {
+    const resultsSection = document.getElementById('resultsSection');
+    const loadingState = document.getElementById('loadingState');
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    resultsSection.classList.remove('hidden');
+    loadingState.classList.remove('hidden');
+    resultsContainer.innerHTML = '';
+
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Simulate loading
+    setTimeout(() => {
+        const q = query.toLowerCase();
+        currentResults = products.filter(p =>
+            p.name.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q) ||
+            p.prices.some(pr => pr.store.toLowerCase().includes(q))
+        );
+
+        // If no exact match, show all with a message
+        if (currentResults.length === 0) {
+            currentResults = [...products].sort(() => Math.random() - 0.5).slice(0, 5);
+            document.getElementById('resultsTitle').textContent = `No exact match for "${query}"`;
+            document.getElementById('resultsSubtitle').textContent = 'Showing similar products you might be interested in';
+        } else {
+            document.getElementById('resultsTitle').textContent = `Results for "${query}"`;
+            document.getElementById('resultsSubtitle').textContent = `Found ${currentResults.length} product${currentResults.length > 1 ? 's' : ''} with price comparisons`;
+        }
+
+        loadingState.classList.add('hidden');
+        activeStoreFilter = 'all';
+        updateStoreFilterUI();
+        sortResults();
+    }, 800);
+}
+
+function sortResults() {
+    const sortBy = document.getElementById('sortSelect').value;
+    let sorted = [...currentResults];
+
+    switch(sortBy) {
+        case 'savings':
+            sorted.sort((a, b) => {
+                const aMax = Math.max(...a.prices.map(p => p.price));
+                const aMin = Math.min(...a.prices.map(p => p.price));
+                const bMax = Math.max(...b.prices.map(p => p.price));
+                const bMin = Math.min(...b.prices.map(p => p.price));
+                return (bMax - bMin) - (aMax - aMin);
+            });
+            break;
+        case 'price-low':
+            sorted.sort((a, b) => Math.min(...a.prices.map(p => p.price)) - Math.min(...b.prices.map(p => p.price)));
+            break;
+        case 'price-high':
+            sorted.sort((a, b) => Math.max(...a.prices.map(p => p.price)) - Math.max(...b.prices.map(p => p.price)));
+            break;
+        case 'stores':
+            sorted.sort((a, b) => b.prices.length - a.prices.length);
+            break;
+    }
+
+    renderResults(sorted);
+}
+
+function toggleStoreFilter(store) {
+    activeStoreFilter = store;
+    updateStoreFilterUI();
+    sortResults();
+}
+
+function updateStoreFilterUI() {
+    document.querySelectorAll('.store-filter').forEach(btn => {
+        const s = btn.dataset.store;
+        if (s === activeStoreFilter) {
+            btn.classList.add('active');
+            btn.style.borderColor = 'rgba(249,115,22,0.5)';
+            btn.style.backgroundColor = 'rgba(249,115,22,0.1)';
+            btn.style.color = '#fb923c';
+        } else {
+            btn.classList.remove('active');
+            btn.style.borderColor = 'rgba(63,63,70,0.5)';
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = '#a1a1aa';
+        }
+    });
+}
+
+function renderResults(results) {
+    const container = document.getElementById('resultsContainer');
+    container.innerHTML = '';
+
+    results.forEach((product, idx) => {
+        let prices = product.prices;
+        if (activeStoreFilter !== 'all') {
+            prices = prices.filter(p => p.store === activeStoreFilter);
+            if (prices.length === 0) return;
+        }
+
+        const minPrice = Math.min(...prices.map(p => p.price));
+        const maxPrice = Math.max(...prices.map(p => p.price));
+        const savings = maxPrice - minPrice;
+        const savingsPercent = maxPrice > 0 ? ((savings / maxPrice) * 100).toFixed(1) : 0;
+        const cheapestStore = prices.find(p => p.price === minPrice);
+        const cheapestStoreInfo = getStoreInfo(cheapestStore.store);
+        const savingsWidth = maxPrice > minPrice ? ((savings / maxPrice) * 100) : 0;
+
+        const card = document.createElement('div');
+        card.className = 'result-card glass-card rounded-2xl overflow-hidden animate-in';
+        card.style.animationDelay = `${idx * 0.08}s`;
+        card.style.opacity = '0';
+
+        card.innerHTML = `
+            <div class="flex flex-col md:flex-row">
+                <!-- Product Image -->
+                <div class="md:w-56 h-48 md:h-auto flex-shrink-0 bg-zinc-900/80 relative overflow-hidden">
+                    <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover opacity-80" loading="lazy">
+                    <div class="absolute top-3 left-3 px-2 py-1 rounded-md text-[10px] font-medium bg-zinc-900/80 text-zinc-400 border border-zinc-800">${product.category}</div>
+                </div>
+
+                <!-- Product Info + Prices -->
+                <div class="flex-1 p-5 md:p-6">
+                    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-zinc-100 tracking-tight">${product.name}</h3>
+                            <div class="flex flex-wrap items-center gap-3 mt-2">
+                                <span class="text-xs text-zinc-500">Available in ${prices.length} store${prices.length > 1 ? 's' : ''}</span>
+                                ${savings > 0 ? `
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+                                        <span class="iconify text-xs" data-icon="lucide:trending-down"></span>
+                                        Save ${formatPrice(savings)} (${savingsPercent}%)
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 text-right">
+                            <div class="text-xs text-zinc-600 mb-1">Best Price</div>
+                            <div class="text-2xl font-bold text-emerald-400">${formatPrice(minPrice)}</div>
+                            <div class="text-xs text-zinc-500 mt-0.5">on ${cheapestStore.store}</div>
+                        </div>
+                    </div>
+
+                    <!-- Savings Bar -->
+                    ${savings > 0 ? `
+                    <div class="mb-4">
+                        <div class="flex justify-between text-[10px] text-zinc-600 mb-1">
+                            <span>${formatPrice(minPrice)}</span>
+                            <span>${formatPrice(maxPrice)}</span>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                            <div class="savings-bar h-full rounded-full" style="width: ${100 - savingsWidth}%"></div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Price Table -->
+                    <div class="rounded-xl border border-zinc-800/50 overflow-hidden">
+                        <div class="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] text-zinc-600 font-medium uppercase tracking-wider bg-zinc-900/50 border-b border-zinc-800/50">
+                            <div class="col-span-4">Store</div>
+                            <div class="col-span-3 text-right">Price</div>
+                            <div class="col-span-3 text-right">vs Cheapest</div>
+                            <div class="col-span-2 text-right">Action</div>
+                        </div>
+                        ${prices.sort((a, b) => a.price - b.price).map((p, i) => {
+                            const diff = p.price - minPrice;
+                            const isCheapest = diff === 0;
+                            const storeInfo = getStoreInfo(p.store);
+                            const storeColor = getStoreColor(p.store);
+                            return `
+                            <div class="price-row grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-zinc-800/30 last:border-0 transition-colors ${isCheapest ? 'bg-emerald-500/5' : ''}">
+                                <div class="col-span-4 flex items-center gap-2">
+                                    <span class="iconify text-base" style="color: ${storeColor}" data-icon="${storeInfo.icon}"></span>
+                                    <div>
+                                        <span class="text-sm text-zinc-200 font-medium">${p.store}</span>
+                                        ${isCheapest ? '<span class="cheapest-badge ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold text-white uppercase">Cheapest</span>' : ''}
+                                    </div>
+                                </div>
+                                <div class="col-span-3 text-right">
+                                    <span class="text-sm font-semibold ${isCheapest ? 'text-emerald-400' : 'text-zinc-300'}">${formatPrice(p.price)}</span>
+                                </div>
+                                <div class="col-span-3 text-right">
+                                    ${isCheapest ? '<span class="text-xs text-emerald-400/60">—</span>' : `<span class="text-xs text-red-400">+${formatPrice(diff)}</span>`}
+                                </div>
+                                <div class="col-span-2 text-right">
+                                    <a href="${storeInfo.url}" target="_blank" rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 ${isCheapest ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 border border-zinc-700/50'}"
+                                       onclick="event.stopPropagation(); showToast('Opening ${p.store} in new tab...', 'success')">
+                                        Visit
+                                        <span class="iconify text-xs" data-icon="lucide:external-link"></span>
+                                    </a>
+                                </div>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+
+    if (container.children.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-16">
+                <span class="iconify text-4xl text-zinc-700 mx-auto mb-4" data-icon="lucide:search-x"></span>
+                <p class="text-zinc-500">No products found for the selected store filter.</p>
+                <button onclick="toggleStoreFilter('all')" class="mt-3 text-sm text-orange-400 hover:text-orange-300 transition-colors">Clear filter</button>
+            </div>
+        `;
+    }
+}
+
+function renderTrending() {
+    const grid = document.getElementById('trendingGrid');
+    const trendingItems = [
+        products[0], products[1], products[3], products[6], products[8], products[14]
+    ];
+
+    trendingItems.forEach((product, idx) => {
+        const minPrice = Math.min(...product.prices.map(p => p.price));
+        const maxPrice = Math.max(...product.prices.map(p => p.price));
+        const savings = maxPrice - minPrice;
+        const cheapestStore = product.prices.find(p => p.price === minPrice);
+
+        const card = document.createElement('div');
+        card.className = 'result-card glass-card rounded-xl overflow-hidden cursor-pointer animate-in';
+        card.style.animationDelay = `${idx * 0.08}s`;
+        card.style.opacity = '0';
+        card.onclick = () => quickSearch(product.name);
+
+        card.innerHTML = `
+            <div class="flex gap-3 p-4">
+                <div class="w-16 h-16 rounded-lg bg-zinc-900 flex-shrink-0 overflow-hidden">
+                    <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover opacity-80" loading="lazy">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-medium text-zinc-200 truncate">${product.name}</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-sm font-bold text-emerald-400">${formatPrice(minPrice)}</span>
+                        <span class="text-[10px] text-zinc-600">on ${cheapestStore.store}</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] text-zinc-500">${product.prices.length} stores</span>
+                        ${savings > 0 ? `<span class="text-[10px] text-emerald-400/70">Save ${formatPrice(savings)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function renderCategories() {
+    const grid = document.getElementById('categoriesGrid');
+
+    categories.forEach((cat, idx) => {
+        const card = document.createElement('button');
+        card.className = 'category-card glass-card rounded-xl p-4 text-center hover:border-orange-500/30 transition-all duration-300 animate-in';
+        card.style.animationDelay = `${idx * 0.05}s`;
+        card.style.opacity = '0';
+        card.onclick = () => {
+            if (cat.count > 0) {
+                quickSearch(cat.name);
+            } else {
+                showToast(`${cat.name} products coming soon!`, 'info');
+            }
+        };
+
+        card.innerHTML = `
+            <div class="cat-icon w-10 h-10 mx-auto rounded-xl bg-zinc-800/50 flex items-center justify-center mb-2.5">
+                <span class="iconify text-xl text-zinc-400" data-icon="${cat.icon}"></span>
+            </div>
+            <div class="text-sm font-medium text-zinc-300">${cat.name}</div>
+            <div class="text-[10px] text-zinc-600 mt-0.5">${cat.count > 0 ? cat.count + ' products' : 'Coming soon'}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function goHome() {
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('searchInput').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToSection(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// =================== INIT ===================
+updateStoreFilterUI();
+renderTrending();
+renderCategories();
+</script>
+</body>
+</html>
